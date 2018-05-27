@@ -71,3 +71,111 @@ def get_segnet_basic():
     segnet_basic.add(Activation('softmax'))
 
     return segnet_basic
+
+def get_full_encoding_layers(kernel = (3, 3), pad = 1, pool_size = 2):
+    return [
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(64, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(64, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        MaxPooling2D(pool_size=(pool_size, pool_size)),
+
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(128, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(128, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        MaxPooling2D(pool_size=(pool_size, pool_size)),
+
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(256, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(256, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(256, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        MaxPooling2D(pool_size=(pool_size, pool_size)),
+
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(512, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(512, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(512, kernel),
+        BatchNormalization(),
+        Activation('relu'),
+    ]
+
+def get_full_decoding_layers(kernel = (3, 3), pad = 1, pool_size = 2):
+    return[
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(512, kernel),
+        BatchNormalization(),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(512, kernel),
+        BatchNormalization(),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(512, kernel),
+        BatchNormalization(),
+
+        UpSampling2D(size=(pool_size,pool_size)),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(256, kernel),
+        BatchNormalization(),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(256, kernel),
+        BatchNormalization(),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(256, kernel),
+        BatchNormalization(),
+
+        UpSampling2D(size=(pool_size,pool_size)),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(128, kernel),
+        BatchNormalization(),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(128, kernel),
+        BatchNormalization(),
+
+        UpSampling2D(size=(pool_size,pool_size)),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(64, kernel),
+        BatchNormalization(),
+        ZeroPadding2D(padding=(pad,pad)),
+        Conv2D(64, kernel),
+        BatchNormalization(),
+    ]
+def get_segnet_full():
+    segnet_basic = Sequential()
+    segnet_basic.add(Layer(input_shape=(height, width, 3)))
+
+    segnet_basic.encoding_layers = get_full_encoding_layers()
+    for l in segnet_basic.encoding_layers:
+        segnet_basic.add(l)
+
+    segnet_basic.decoding_layers = get_full_decoding_layers()
+    for l in segnet_basic.decoding_layers:
+        segnet_basic.add(l)
+
+    segnet_basic.add(Conv2D(classes, (1, 1)))
+
+    segnet_basic.add(Reshape((height*width, classes), input_shape=(height, width, classes)))
+    segnet_basic.add(Activation('softmax'))
+
+    return segnet_basic

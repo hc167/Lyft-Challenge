@@ -13,7 +13,7 @@ from sklearn.utils import shuffle
 
 height = 600
 width = 800
-classes = 13
+classes = 3
 
 class DLProgress(tqdm):
     last_block = 0
@@ -58,6 +58,32 @@ def normalized(rgb):
 
     return norm
 
+def preprocess_labels(label_image):
+
+    # free up the second and third index by making them other first
+    label_image[label_image[:,:,:] == 1] = 0 
+    label_image[label_image[:,:,:] == 2] = 0 
+
+    # now assign road and road line to 1
+    label_image[label_image[:,:,:] == 6] = 1
+    label_image[label_image[:,:,:] == 7] = 1
+
+    # assign car to two
+    label_image[label_image[:,:,:] == 10] = 2
+
+    # the rest, for other
+    label_image[label_image[:,:,:] >= 3] = 0 
+
+    # Now, remove the hood
+    # Identify all vehicle pixels
+    vehicle_pixels = (label_image[:,:,2] == 2).nonzero()
+    # Isolate vehicle pixels associated with the hood (y-position > 496)
+    hood_indices = (vehicle_pixels[0] >= 496).nonzero()[0]
+    hood_pixels = (vehicle_pixels[0][hood_indices], \
+                   vehicle_pixels[1][hood_indices])
+    # Set hood pixel labels to 0
+    label_image[hood_pixels] = 0
+
 def one_hot_encode(labels):
     if len(labels.shape) != 2:
         raise RuntimeError('one hot encoding: input data is not 2 dimensional data')
@@ -89,6 +115,7 @@ def prep_data(samples):
             label = np.fliplr(label)
                     
         images.append(normalized(img))
+        preprocess_labels(label)
         labels.append(np.reshape(one_hot_encode(label[:,:,2]), (height*width, classes)))
         print('.',end='')        
         
@@ -119,6 +146,7 @@ def generator(samples, batch_size=32):
                     
                 images.append(normalized(img))
                 
+                preprocess_labels(label)
                 label = one_hot_encode(label[:,:,2])
                 label = np.reshape(label, (height*width, classes))
                 labels.append(label)
