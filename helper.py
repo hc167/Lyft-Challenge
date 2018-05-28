@@ -8,6 +8,8 @@ from tqdm import tqdm
 from os.path import isfile, isdir
 from urllib.request import urlretrieve
 import tarfile
+import zipfile
+import os
 
 from sklearn.utils import shuffle
 
@@ -25,6 +27,8 @@ class DLProgress(tqdm):
 
 def download_data():
     image_data = "lyft_training_data.tar.gz"
+    image_data2 = "calra-capture-20180528.zip"
+
     if not isdir("Train"): 
         if not isfile(image_data):
             with DLProgress(unit='B', unit_scale=True, miniters=1, desc='image data') as pbar:
@@ -32,10 +36,23 @@ def download_data():
                     'https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/Lyft_Challenge/Training+Data/lyft_training_data.tar.gz',
                     image_data,
                     pbar.hook)
+        if not isfile(image_data2):
+            with DLProgress(unit='B', unit_scale=True, miniters=1, desc='image data') as pbar:
+                urlretrieve(
+                    'https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180528.zip',
+                    image_data2,
+                    pbar.hook)
 
         targz = tarfile.open(image_data, 'r')
         targz.extractall()
         targz.close()
+
+        zipdata = zipfile.ZipFile(image_data2, 'r')
+        zipdata.extractall("Train")
+        zipdata.close()
+
+def getDataSetName():
+    return os.listdir("Train/CameraRGB/")
 
 def DisplayImage(img1, img2, title1, title2):
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
@@ -76,7 +93,7 @@ def preprocess_labels(label_image):
 
     # Now, remove the hood
     # Identify all vehicle pixels
-    vehicle_pixels = (label_image[:,:,2] == 2).nonzero()
+    vehicle_pixels = (label_image[:,:,0] == 2).nonzero()
     # Isolate vehicle pixels associated with the hood (y-position > 496)
     hood_indices = (vehicle_pixels[0] >= 496).nonzero()[0]
     hood_pixels = (vehicle_pixels[0][hood_indices], \
@@ -100,20 +117,9 @@ def prep_data(samples):
     
     shuffle(samples)
     for sample in samples:
-        flip = False
-        filenum = sample
-        if filenum > 1000:
-            flip = True
-            filenum = filenum - 1000
+        img = cv2.cvtColor(cv2.imread ('Train/CameraRGB/' + sample), cv2.COLOR_BGR2RGB)
+        label = cv2.cvtColor(cv2.imread('Train/CameraSeg/' + sample), cv2.COLOR_BGR2RGB)
 
-        filenum = str(filenum)
-        img = cv2.imread ('Train/CameraRGB/' + filenum + '.png')
-        label = cv2.imread('Train/CameraSeg/' + filenum + '.png')
-
-        if flip:
-            img = np.fliplr(img)
-            label = np.fliplr(label)
-                    
         images.append(normalized(img))
         preprocess_labels(label)
         labels.append(np.reshape(one_hot_encode(label[:,:,2]), (height*width, classes)))
@@ -121,7 +127,7 @@ def prep_data(samples):
         
     return np.array(images), np.array(labels)
 
-def generator(samples, batch_size=32):
+def generator(samples, batch_size=2):
     num_samples = len(samples)
     while 1: # Loop forever so the generator never terminates
         shuffle(samples)
@@ -131,19 +137,9 @@ def generator(samples, batch_size=32):
             images = []
             labels = []
             for batch_sample in batch_samples:
-                flip = False
-                filenum = batch_sample
-                if batch_sample > 1000:
-                    flip = True
-                    filenum = filenum - 1000
-                filenum = str(filenum)
-                img = cv2.imread ('Train/CameraRGB/' + filenum + '.png')
-                label = cv2.imread('Train/CameraSeg/' + filenum + '.png')
+                img = cv2.cvtColor(cv2.imread ('Train/CameraRGB/' + batch_sample), cv2.COLOR_BGR2RGB)
+                label = cv2.cvtColor(cv2.imread('Train/CameraSeg/' + batch_sample), cv2.COLOR_BGR2RGB)
                 
-                if flip:
-                    img = np.fliplr(img)
-                    label = np.fliplr(label)
-                    
                 images.append(normalized(img))
                 
                 preprocess_labels(label)
