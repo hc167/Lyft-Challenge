@@ -122,7 +122,7 @@ def prep_data(samples):
 
         images.append(normalized(img))
         preprocess_labels(label)
-        labels.append(np.reshape(one_hot_encode(label[:,:,2]), (height*width, classes)))
+        labels.append(np.reshape(one_hot_encode(label[:,:,0]), (height*width, classes)))
         print('.',end='')        
         
     return np.array(images), np.array(labels)
@@ -143,7 +143,7 @@ def generator(samples, batch_size=2):
                 images.append(normalized(img))
                 
                 preprocess_labels(label)
-                label = one_hot_encode(label[:,:,2])
+                label = one_hot_encode(label[:,:,0])
                 label = np.reshape(label, (height*width, classes))
                 labels.append(label)
 
