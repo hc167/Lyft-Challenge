@@ -10,11 +10,14 @@ from urllib.request import urlretrieve
 import tarfile
 import zipfile
 import os
+import random
 
 from sklearn.utils import shuffle
 
-height = 600
 width = 800
+top = 220
+bottom = 540
+height = bottom - top
 classes = 3
 
 class DLProgress(tqdm):
@@ -68,10 +71,11 @@ def normalized(rgb):
     if rgb.shape[2] != 3:
         raise RuntimeError('normalized: input data is not in RGB color')
         
-    norm=np.zeros((rgb.shape[0], rgb.shape[1], 3), np.float32)
-    norm[:,:,0]=cv2.equalizeHist(rgb[:,:,0])
-    norm[:,:,1]=cv2.equalizeHist(rgb[:,:,1])
-    norm[:,:,2]=cv2.equalizeHist(rgb[:,:,2])
+    n_image = rgb[top:bottom,:,:]
+    norm=np.zeros((n_image.shape[0], n_image.shape[1], 3), np.float32)
+    norm[:,:,0]=cv2.equalizeHist(n_image[:,:,0])
+    norm[:,:,1]=cv2.equalizeHist(n_image[:,:,1])
+    norm[:,:,2]=cv2.equalizeHist(n_image[:,:,2])
 
     return norm
 
@@ -100,6 +104,8 @@ def preprocess_labels(label_image):
                    vehicle_pixels[1][hood_indices])
     # Set hood pixel labels to 0
     label_image[hood_pixels] = 0
+    return label_image[top:bottom,:,:]
+
 
 def one_hot_encode(labels):
     if len(labels.shape) != 2:
@@ -121,13 +127,13 @@ def prep_data(samples):
         label = cv2.cvtColor(cv2.imread('Train/CameraSeg/' + sample), cv2.COLOR_BGR2RGB)
 
         images.append(normalized(img))
-        preprocess_labels(label)
+        label = preprocess_labels(label)
         labels.append(np.reshape(one_hot_encode(label[:,:,0]), (height*width, classes)))
         print('.',end='')        
         
     return np.array(images), np.array(labels)
 
-def generator(samples, batch_size=2):
+def generator(samples, batch_size=6):
     num_samples = len(samples)
     while 1: # Loop forever so the generator never terminates
         shuffle(samples)
@@ -139,10 +145,15 @@ def generator(samples, batch_size=2):
             for batch_sample in batch_samples:
                 img = cv2.cvtColor(cv2.imread ('Train/CameraRGB/' + batch_sample), cv2.COLOR_BGR2RGB)
                 label = cv2.cvtColor(cv2.imread('Train/CameraSeg/' + batch_sample), cv2.COLOR_BGR2RGB)
+
+                rand = random.randrange(0,2)
+                if rand == 0:
+                    img = np.fliplr(img).astype(np.uint8)
+                    label = np.fliplr(label).astype(np.uint8)
                 
                 images.append(normalized(img))
                 
-                preprocess_labels(label)
+                label = preprocess_labels(label)
                 label = one_hot_encode(label[:,:,0])
                 label = np.reshape(label, (height*width, classes))
                 labels.append(label)
