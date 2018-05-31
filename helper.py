@@ -161,10 +161,10 @@ def generator(samples, batch_size=6):
                 img = cv2.cvtColor(cv2.imread ('data/Train/CameraRGB/' + batch_sample), cv2.COLOR_BGR2RGB)
                 label = cv2.cvtColor(cv2.imread('data/Train/CameraSeg/' + batch_sample), cv2.COLOR_BGR2RGB)
 
-                rand = random.randrange(0,2)
-                if rand == 0:
-                    img = np.fliplr(img).astype(np.uint8)
-                    label = np.fliplr(label).astype(np.uint8)
+#                rand = random.randrange(0,2)
+#                if rand == 0:
+#                    img = np.fliplr(img).astype(np.uint8)
+#                    label = np.fliplr(label).astype(np.uint8)
                 
                 images.append(normalized(img))
                 
