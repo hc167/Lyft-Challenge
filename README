@@ -1,0 +1,16 @@
+This is README for Udacity-Lyft challenge
+
+The semantic segmentation algorithms that is used for this challenge is SegNet. I slightly modified the original design by removing the last Maxpooling of 
+the encoder layer and the first upsampling layer of the decoder layer. Also, keras library was selected instead of tensorflow. 
+
+I first remove the top part of the image and bottom par tof the image to make it from a 600 x 800 image into 320 x 800. Next, I reduce the size of the image from 
+320 x 800 into 160 x 400. And then normalize the image. Next, I convert the entire label data and set it to three classes, namely, 'other', 'car', and 'road'. Of course
+I also change the dash of the car and label it as 'other'. 
+
+The source code are located in github as https://github.com/hc167/lyft
+
+In the Udacity-lyft challenge workspace, only the 'submit.py' file and the 'model_with_weight.h5' are needed to run the program. I train the model and generate the model_with_weight.h5
+and update it in the workspace.
+
+batch size that I used for training is 20 and 2000 images are used for trainning. I only execute two epochs. and adadelta optimizer was used for trainning. In addition, categorical cross
+entropy function was used as a classifier. 
