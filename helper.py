@@ -28,7 +28,7 @@ class DLProgress(tqdm):
         self.update((block_num - self.last_block) * block_size)
         self.last_block = block_num
 
-def download_data():
+def download_data_backup():
     image_data = "data.tar.gz"
 
     if not isdir("data"): 
@@ -43,7 +43,7 @@ def download_data():
         targz.extractall()
         targz.close()
 
-def download_data_backup():
+def download_data():
     image_data = "lyft_training_data.tar.gz"
     image_data2 = "calra-capture-20180528.zip"
 
@@ -70,7 +70,7 @@ def download_data_backup():
         zipdata.close()
 
 def getDataSetName():
-    return os.listdir("data/Train/CameraRGB/")
+    return os.listdir("Train/CameraRGB/")
 
 def DisplayImage(img1, img2, title1, title2):
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
@@ -86,7 +86,8 @@ def normalized(rgb):
     if rgb.shape[2] != 3:
         raise RuntimeError('normalized: input data is not in RGB color')
         
-    n_image = rgb[top:bottom,:,:]
+    t_image = rgb[top:bottom,:,:]
+    n_image = cv2.resize(t_image, (t_image.shape[1]//2, t_image.shape[0]//2))
     norm=np.zeros((n_image.shape[0], n_image.shape[1], 3), np.float32)
     norm[:,:,0]=cv2.equalizeHist(n_image[:,:,0])
     norm[:,:,1]=cv2.equalizeHist(n_image[:,:,1])
@@ -138,8 +139,8 @@ def prep_data(samples):
     
     shuffle(samples)
     for sample in samples:
-        img = cv2.cvtColor(cv2.imread ('data/Train/CameraRGB/' + sample), cv2.COLOR_BGR2RGB)
-        label = cv2.cvtColor(cv2.imread('data/Train/CameraSeg/' + sample), cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(cv2.imread ('Train/CameraRGB/' + sample), cv2.COLOR_BGR2RGB)
+        label = cv2.cvtColor(cv2.imread('Train/CameraSeg/' + sample), cv2.COLOR_BGR2RGB)
 
         images.append(normalized(img))
         label = preprocess_labels(label)
@@ -158,8 +159,8 @@ def generator(samples, batch_size=6):
             images = []
             labels = []
             for batch_sample in batch_samples:
-                img = cv2.cvtColor(cv2.imread ('data/Train/CameraRGB/' + batch_sample), cv2.COLOR_BGR2RGB)
-                label = cv2.cvtColor(cv2.imread('data/Train/CameraSeg/' + batch_sample), cv2.COLOR_BGR2RGB)
+                img = cv2.cvtColor(cv2.imread ('Train/CameraRGB/' + batch_sample), cv2.COLOR_BGR2RGB)
+                label = cv2.cvtColor(cv2.imread('Train/CameraSeg/' + batch_sample), cv2.COLOR_BGR2RGB)
 
 #                rand = random.randrange(0,2)
 #                if rand == 0:

@@ -49,11 +49,12 @@ def get_decoding_layers(kernel = (3, 3), pool_size = 2):
         Conv2D(64, kernel, padding='same'),
         BatchNormalization(),
         Activation('relu'),
+        UpSampling2D(size=(pool_size,pool_size)),
     ]
 
 def get_segnet_basic():
     segnet_basic = Sequential()
-    segnet_basic.add(Layer(input_shape=(height, width, 3)))
+    segnet_basic.add(Layer(input_shape=(height//2, width//2, 3)))
 
     segnet_basic.encoding_layers = get_encoding_layers()
     for l in segnet_basic.encoding_layers:
@@ -173,11 +174,12 @@ def get_full_decoding_layers(kernel = (3, 3), pool_size = 2):
         Conv2D(64, kernel, padding='same'),
         BatchNormalization(),
         Activation('relu'),
+        UpSampling2D(size=(pool_size,pool_size)),
     ]
 
 def get_segnet_full():
     segnet_basic = Sequential()
-    segnet_basic.add(Layer(input_shape=(height, width, 3)))
+    segnet_basic.add(Layer(input_shape=(height//2, width//2, 3)))
 
     segnet_basic.encoding_layers = get_full_encoding_layers()
     for l in segnet_basic.encoding_layers:
